@@ -537,6 +537,4 @@ def stock_sentiment_analysis():
     return render_template('stock_sentiment_analysis.html', options=interval_dropdown, default_value = default_value, plot_html=None,
                            search_query=search_query, tail_html=None, last_fetch_time = last_fetch_time)
 
-if __name__ == '__main__':
-    app.run(debug=True)
 
