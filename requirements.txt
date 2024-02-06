@@ -50,7 +50,7 @@ h5py==3.10.0
 huggingface-hub==0.20.3
 idna==3.6
 ipykernel==6.29.0
-ipython==8.20.0
+ipython
 ipywidgets==8.1.1
 itsdangerous==2.1.2
 jedi==0.19.1
