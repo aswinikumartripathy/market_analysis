@@ -98,6 +98,7 @@ python-engineio==4.8.2
 python-socketio==5.11.0
 pyttsx3==2.90
 pytz==2023.4
+pywin32==223
 PyYAML==6.0.1
 pyzmq==25.1.2
 regex==2023.12.25
