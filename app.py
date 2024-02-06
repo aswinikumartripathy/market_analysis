@@ -1,26 +1,26 @@
 from flask import Flask, render_template, request, jsonify
-import plotly.express as px
-from markupsafe import Markup
-from pandas import Timestamp
+# import plotly.express as px
+# from markupsafe import Markup
+# from pandas import Timestamp
 from bs4 import BeautifulSoup
-from selenium import webdriver
+# from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import pandas as pd
 import time
 from transformers import pipeline
-from ipywidgets import interact, widgets
-from ipywidgets import interactive
+# from ipywidgets import interact, widgets
+# from ipywidgets import interactive
 from IPython.display import HTML, display, clear_output
 from datetime import datetime, timedelta
 import plotly.graph_objects as go
 import numpy as np
 import plotly.offline as pyo
-import plotly.io as pio
+# import plotly.io as pio
 from plotly.subplots import make_subplots
 from IPython.display import HTML
-import json
+# import json
 from dateutil import parser, tz
 from transformers import BertTokenizer, BertForTokenClassification
 import torch
@@ -537,5 +537,6 @@ def stock_sentiment_analysis():
     return render_template('stock_sentiment_analysis.html', options=interval_dropdown, default_value = default_value, plot_html=None,
                            search_query=search_query, tail_html=None, last_fetch_time = last_fetch_time)
 
-
+if __name__ == '__main__':
+    app.run(debug=True)
 
