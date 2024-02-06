@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Add icon library -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <style>
+    /* Custom CSS to increase the size of all icons */
+    body {
+      margin: 0; /* Remove default body margin */
+      font-family: Arial, sans-serif; /* Choose a suitable font */
+    }
+
+    header {
+      position: fixed;
+      top: 0;
+      width: 100%;
+      background-color: #333; /* Add a background color to the header */
+      color: white; /* Set text color */
+      padding: 10px;
+      text-align: center;
+    }
+
+    .icon-container {
+      display: flex;
+      justify-content: center;
+      margin-top: 80px; /* Adjust as needed to give space for the header */
+    }
+
+    .btn {
+      margin: 0 10px; /* Add margin between buttons */
+    }
+
+    .fa {
+      font-size: 10em; /* Adjust the size as needed */
+    }
+    .fa:hover::after {
+      content: attr(data-tooltip); /* Display the content of the data-tooltip attribute */
+      position: absolute;
+      top: 100%; /* Position it just below the icon */
+      left: 50%; /* Center it horizontally */
+      transform: translateX(-50%); /* Adjust for centering */
+      background-color: #f2f2f2;
+      padding: 5px;
+      border-radius: 5px;
+      font-size: 0.8em;
+      white-space: nowrap; /* Prevent line breaks */
+      z-index: 1; /* Ensure it appears above other elements */
+    }
+    a {
+        text-decoration: none; /* Remove underline */
+        color: inherit; /* Inherit the color from the parent */
+        
+    }
+    a:hover {
+        color: blue; /* Change color on hover */
+    }
+    .button-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+  </style>
+  <title>Market Analysis</title>
+</head>
+<body>
+  <h1 style="text-align: center;">Market Analysis</h1>
+  <button class="btn" title="Stock Sentiment Analysis">
+    <a href="/stock_sentiment_analysis">
+      <i class="fa fa-line-chart"></i>
+    </a>
+  </button>
+  <button class="btn" title="News Alert">
+    <a href="/news_alert">
+        <i class="fa fa-bell notification-icon"></i>
+    </a>
+  </button>
+</body>
+</html>

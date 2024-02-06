@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <title>Market Analysis - News Monitor</title>
+    <style>
+        /* Add these styles to your existing CSS or in a new style block in the head section */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+      
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+        th:last-child,
+        td:last-child {
+            padding-right: 0;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+
+        p {
+            text-align: center;
+        }
+
+        /* Tab styles */
+        .tab {
+            cursor: pointer;
+            padding: 10px 20px;
+            background-color: #f2f2f2;
+            border: 1px solid #ddd;
+            border-radius: 5px 5px 0 0;
+            display: inline-block;
+        }
+
+        .tab:hover {
+            background-color: #ddd;
+        }
+
+        .tab-content {
+            display: none;
+            border: 1px solid #ddd;
+            padding: 20px;
+            border-radius: 0 5px 5px 5px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            border: 1px solid #ddd;
+        }
+        p, h4 {
+            margin: 0; /* Remove default margin */
+        }
+
+        .datetime-container {
+            display: flex; /* Use flexbox for horizontal alignment */
+            align-items: center; /* Center items vertically */
+            text-align: left;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 2px; /* Adjust the padding value as needed */
+            text-align: center;
+        }
+        a {
+            text-decoration: none; /* Remove underline */
+            color: inherit; /* Inherit the color from the parent */
+            
+        }
+        a:hover {
+            color: blue; /* Change color on hover */
+        }
+        .fa {
+            font-size: 1em; /* Adjust the size as needed */
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            border: 1px solid #ddd;
+            background-color: rgb(80, 80, 241); /* Set the background color to blue */
+            color: white; /* Set text color to white */
+            transition: background-color 0.3s ease; /* Add transition for smooth color change */
+        }
+
+        button:hover {
+            background-color: #003366; /* Darker blue on hover */
+        }
+
+
+    </style>
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+    <script>
+        var isPaused = false;
+        var updateInterval;
+
+        function updateContent() {
+            console.log("Updating content...");
+
+            // Fetch the updated DataFrame as JSON
+            $.get("/get_dataframe", function (data) {
+                console.log("Received DataFrame data:", data);
+
+                // Parse JSON data
+                var jsonData = JSON.parse(data.data);
+
+                // Update the HTML content of the datetime
+                $("#datetime").text(data.datetime);
+
+                // Update the HTML content of the DataFrame table
+                updateDataFrameTable(jsonData);
+            });
+            // Fetch the updated datetime
+            $.get("/get_datetime", function (data) {
+                console.log("Received datetime data:", data);
+
+                // Update the HTML content of the datetime
+                $("#datetime").text(data.datetime);
+            });
+        }
+
+        // Function to update the DataFrame table
+        function updateDataFrameTable(jsonData) {
+            // Clear the existing table content
+            $("#dataframe").empty();
+
+            // Add CSS class to style the table
+            $("#dataframe").addClass("styled-table");
+
+            // Check if the 'datetime_column' exists in the columns
+            var hasDatetimeColumn = jsonData.columns.includes('datetime_column');
+
+            // Add header row with lines between columns
+            var headerRow = '<tr>' + jsonData.columns.map(col => {
+                if (col === 'datetime_column' && !hasDatetimeColumn) {
+                    return '<th>' + 'Datetime' + '</th>'; // Rename if necessary
+                } else {
+                    return '<th>' + col + '</th>';
+                }
+            }).join('<th class="vertical-line"></th>') + '</tr>';
+
+            $("#dataframe").append(headerRow);
+
+            // Add data rows with lines between rows and columns
+            jsonData.data.forEach((row, rowIndex) => {
+                var rowData = '<tr>' + row.map((cell, colIndex) => {
+                    // Format datetime column to a readable format
+                    if (jsonData.columns[colIndex] === 'datetime_column') {
+                        return '<td>' + new Date(cell).toLocaleString() + '</td>';
+                    } else {
+                        return '<td>' + cell + '</td>';
+                    }
+                }).join('<td class="vertical-line"></td>') + '</tr>';
+                $("#dataframe").append(rowData);
+
+                // Add horizontal line between rows (except for the last row)
+                if (rowIndex < jsonData.data.length - 1) {
+                    $("#dataframe").append('<tr class="horizontal-line"></tr>');
+                }
+            });
+        }
+
+	// Function to switch tabs
+        function switchTab(tabName) {
+            $(".tab-content").hide();
+            $("#" + tabName).show();
+        }
+        
+        function pauseResumeUpdate() {
+            isPaused = !isPaused;
+            var button = $("#pauseResumeButton");
+
+            if (isPaused) {
+                clearInterval(updateInterval);
+                button.text("Resume");
+                console.log("Updates paused");
+            } else {
+                button.text("Pause");
+                console.log("Updates resumed");
+                updateContent();
+                // Set interval to update content every 60 seconds
+                updateInterval = setInterval(function () {
+                    console.log("Interval triggered...");
+                    updateContent();
+                }, 60000);
+            }
+        }
+
+
+
+        // Update content initially and set an interval for every 60 seconds
+        $(document).ready(function () {
+            updateContent(); // Initial update
+
+            // Set button text based on initial state
+            $("#pauseResumeButton").text(isPaused ? "Resume" : "Pause");
+
+            // Set interval to update content every 60 seconds
+            updateInterval = setInterval(function () {
+                if (!isPaused) {
+                    console.log("Interval triggered...");
+                    updateContent();
+                }
+            }, 60000);
+        });
+
+
+        // Initialize with the News Alert tab visible
+        switchTab('newsAlertTab');
+    </script>
+</head>
+<body>
+    <h1 style="text-align: center;">News Alert</h1>
+    <!-- Tab Navigation -->
+    <div>
+        <div class="tab">
+            <a href="/" onclick="openTab('home')">
+                <i class="fa fa-home"></i> Home
+            </a>
+        </div>
+        <div class="tab" onclick="openTab('newsAlert')">
+            <a href="/stock_sentiment_analysis">
+                Stock Sentiment Analysis
+            </a>
+        </div>
+        <div class="tab" onclick="openTab('newsAlertTab')">News Alert</div>
+    </div>
+    <!-- Tab Content for News Alert -->
+    <div id="newsAlertTab" class="tab-content">
+
+        <h2 style="text-align: center;">Latest News</h2>
+        <div class="datetime-container">
+            <p style="text-align: left; margin-right: 10px;">Last refresh at:</p>
+            <h4 id="datetime" style="text-align: left; margin-right: 10px;"></h4>
+            <button id="pauseResumeButton" onclick="pauseResumeUpdate()">Pause</button>
+        </div>
+        <table id="dataframe"></table>
+    </div>
+    <!-- Tab Content for Stock Sentiment Analysis -->
+    <div id="sentimentAnalysisTab" class="tab-content">
+        <h1 style="text-align: center;">Stock Sentiment Analysis</h1>
+        <!-- Add your content for Stock Sentiment Analysis here -->
+    </div>
+    <script>
+        // Initialize with the News Alert tab visible
+        switchTab('newsAlertTab');
+    </script>
+
+</body>
+</html>

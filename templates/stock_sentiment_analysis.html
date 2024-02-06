@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Market Analysis</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+
+        form {
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        label {
+            margin-right: 5px;
+        }
+
+        input[type="text"],
+        select {
+            padding: 10px;
+            font-size: 16px;
+            width: 200px;
+            margin-bottom: 10px;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+        }
+
+        select#interval_dropdown {
+            padding: 5px;
+            font-size: 14px;
+            width: 90px;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+
+        p {
+            text-align: center;
+        }
+
+        /* Tab styles */
+        .tab {
+            cursor: pointer;
+            padding: 10px 20px;
+            background-color: #f2f2f2;
+            border: 1px solid #ddd;
+            border-radius: 5px 5px 0 0;
+            display: inline-block;
+        }
+
+        .tab:hover {
+            background-color: #ddd;
+        }
+
+        .active-tab {
+            background-color: #ddd;
+        }
+
+        .tab-content {
+            display: none;
+            border: 1px solid #ddd;
+            padding: 20px;
+            border-radius: 0 5px 5px 5px;
+        }
+        a {
+            text-decoration: none; /* Remove underline */
+            color: inherit; /* Inherit the color from the parent */
+            
+        }
+        a:hover {
+            color: blue; /* Change color on hover */
+            text-decoration: none; /* Remove underline */
+            
+        }
+        .fa {
+            font-size: 1em; /* Adjust the size as needed */
+        }
+        .tab.home-tab {
+            cursor: pointer;
+            padding: 10px 30px; /* Adjust the padding as needed */
+            background-color: #f2f2f2;
+            border: 1px solid #ddd;
+            border-radius: 5px 5px 0 0;
+            display: inline-block;
+            text-decoration: none; 
+        }
+        .tab.home-tab:hover {
+            background-color: #ddd;
+            text-decoration: none; 
+        }
+
+        .tab.home-tab a {
+            display: block;
+        }
+
+        .tab.home-tab i {
+            font-size: 1.5em; /* Adjust the size as needed */
+        }
+        .input-container {
+            position: relative;
+        }
+
+        .input-group-append {
+            position: absolute;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            display: flex;
+            align-items: center;
+        }
+
+        .btn {
+            cursor: pointer;
+        }
+
+    </style>
+</head>
+<body>
+    <!-- <h1 style="text-align: center;">Market Analysis</h1> -->
+    <h1 style="text-align: center;">Stock Sentiment Analysis</h1>
+
+
+    <!-- Tabs for Stock Sentiment Analysis and Recent News -->
+    <div class="tab">
+        <a href="/" onclick="openTab('home')">
+            <i class="fa fa-home"></i> Home
+        </a>
+    </div>
+    <div class="tab" onclick="openTab('sentimentAnalysis')">Stock Sentiment Analysis</div>
+    <!-- <div class="tab" onclick="openTab('newsAlert')">News Alert</div> -->
+    <div class="tab" onclick="openTab('newsAlert')">
+        <a href="/news_alert">
+            News Alert
+        </a>
+    </div>
+
+    <!-- Stock Sentiment Analysis Content -->
+    <div id="sentimentAnalysisContent" class="tab-content">
+        <!-- Interval Dropdown Form -->
+        <form id="intervalForm" method="POST" action="/stock_sentiment_analysis">
+            <div class="input-container" style="display: flex; align-items: center; white-space: nowrap;">
+                <label for="search_query" style="margin-right: 10px;">Stock Search</label>
+                <div class="input-group" style="margin-right: 10px;">
+                    <input type="text" class="form-control" name="search_query" id="search_query" value="{{ search_query }}">
+                    <div class="input-group-append">
+                        <button class="btn btn-outline-secondary" type="button" onclick="clearInput()">×</button>
+                    </div>
+                </div>
+                <!-- Add Fetch Sentiment button -->
+                <button type="submit" class="btn btn-primary" id="fetchSentimentButton" value="fetch_sentiment">Fetch Sentiment</button>
+            </div>
+            
+            <!-- Add line gap here -->
+            <div style="margin-top: 20px;"></div>
+            
+            
+            <!-- Interval Dropdown on the next line -->
+            <div>
+                <label for="interval_dropdown">Interval</label>
+                <select name="interval_dropdown" id="interval_dropdown">
+                    <option value="" {% if default_value == "" %}selected{% endif %} disabled>--select--</option>
+                    {% for option in options %}
+                        <option value="{{ option }}" {% if option == default_value %}selected{% endif %}>{{ option }}</option>
+                    {% endfor %}
+                </select>
+                <label for="interval_dropdown" style="margin-left: 5px;">mins</label>
+            </div>
+
+            <!-- Hidden input to store the action -->
+            <input type="hidden" name="action" id="action" value="">
+        </form>
+
+        <!-- Display the last fetch time (for debugging) -->
+        <div>
+            {% if last_fetch_time %}
+            <p style="text-align: left;">Last Fetch Time: {{ last_fetch_time }}</p>
+            {% endif %}
+        </div>
+
+        <!-- Plot Container -->
+        <div id="plot-container">
+            {% if plot_html %}
+                {{ plot_html|safe }}
+            {% endif %}
+        </div>
+        <div id="recentNewsContent">
+            {% if tail_html %}
+                <h2 style="text-align: center;">Recent News</h2>
+                {{ tail_html|safe }}
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Recent News Content -->
+
+    <script>
+        // Update the hidden action input when the Fetch Sentiment button is clicked
+        document.getElementById('fetchSentimentButton').addEventListener('click', function () {
+            document.getElementById('action').value = 'fetch_sentiment';
+        });
+
+        // Add event listener to the interval dropdown
+        document.getElementById('interval_dropdown').addEventListener('change', function () {
+            // Update the hidden action input when the interval dropdown changes
+            document.getElementById('action').value = 'interval_change';
+            
+            // Convert the value to an integer
+            var intervalMinutes = parseInt(this.value, 10);
+
+            // Submit the form only if a valid option is selected
+            if (!isNaN(intervalMinutes)) {
+                // Set the value back to the dropdown to ensure it's a number
+                this.value = intervalMinutes;
+                // Submit the form
+                document.getElementById('intervalForm').submit();
+            }
+        });
+         // Automatically load Stock Sentiment Analysis tab on page load
+        document.addEventListener('DOMContentLoaded', function () {
+            openTab('sentimentAnalysis');
+        });
+        
+        // Function to clear the input
+        function clearInput() {
+            document.getElementById('search_query').value = '';
+        }
+        // Function to open tabs
+        function openTab(tabName) {
+            var i, tabContent;
+
+            // Hide all tab content
+            tabContent = document.getElementsByClassName('tab-content');
+            for (i = 0; i < tabContent.length; i++) {
+                tabContent[i].style.display = 'none';
+            }
+
+            // Remove active-tab class from all tabs
+            tabs = document.getElementsByClassName('tab');
+            for (i = 0; i < tabs.length; i++) {
+                tabs[i].classList.remove('active-tab');
+            }
+
+            // Display the selected tab content and mark it as active
+            document.getElementById(tabName + 'Content').style.display = 'block';
+            document.getElementById(tabName).classList.add('active-tab');
+        }
+    </script>
+</body>
+</html>
