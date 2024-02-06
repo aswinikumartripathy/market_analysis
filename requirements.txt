@@ -91,7 +91,6 @@ pycparser==2.21
 pydantic==2.6.0
 pydantic_core==2.16.1
 Pygments==2.17.2
-pypiwin32==223
 PySocks==1.7.1
 python-dateutil==2.8.2
 python-engineio==4.8.2
