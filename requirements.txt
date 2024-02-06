@@ -93,7 +93,7 @@ pydantic_core==2.16.1
 Pygments==2.17.2
 pypiwin32==223
 PySocks==1.7.1
-python==3.10.13
+python_version == 3.10.13
 python-dateutil==2.8.2
 python-engineio==4.8.2
 python-socketio==5.11.0
