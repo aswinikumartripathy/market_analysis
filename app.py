@@ -26,6 +26,7 @@ from transformers import BertTokenizer, BertForTokenClassification
 import torch
 import pyttsx3
 from msedge.selenium_tools import EdgeOptions, Edge
+import requests
 
 
 app = Flask(__name__)
@@ -163,89 +164,67 @@ def update_plot(interval_minutes, df, search_query):
 
     return plot_html
 
-def fetch_news_money_control(url, search_query = ""):
-        # display(search_query)
-    if len(search_query) == 0:
-        edge_driver_path = './msedgedriver.exe'  # Change this to the path of your Edge WebDriver
+def fetch_news_money_control(url = "https://www.moneycontrol.com/news/business/markets/", search_query = ""):
+    response = requests.get(url)
+    soup = BeautifulSoup(response.text, 'html.parser')
+    news_elements = soup.find_all('li', class_='clearfix')
 
-        # Set up Edge options for headless mode
-        edge_options = EdgeOptions()
-        edge_options.use_chromium = True  # Use Chromium-based Edge
-        edge_options.add_argument('--headless')
+    def convert_to_datetime(df, datetime_column):
+    # Define a dictionary to map timezone abbreviations to their offsets
+        tzinfos = {"IST": 19800}  # Indian Standard Time (UTC +5:30)
 
-        # Create a WebDriver instance with the specified options
-        driver = Edge(options=edge_options, executable_path=edge_driver_path)
+        # Apply datetime parsing with the tzinfos argument
+        df[datetime_column] = df[datetime_column].apply(lambda x: parser.parse(x, fuzzy=True, tzinfos=tzinfos) if pd.notnull(x) else None)
 
-        # chrome_driver_path = './chrome.exe'
-        # driver = webdriver.Edge(executable_path=edge_driver_path)
-        # driver = webdriver.Chrome(executable_path=chrome_driver_path)
-        driver.get(url)
+        # Strip the last +05:30 part and format in 24-hour format
+        df[datetime_column] = df[datetime_column].dt.strftime('%B %d, %Y %H:%M')
 
-        def convert_to_datetime(df, datetime_column):
-        # Apply datetime parsing
-            df[datetime_column] = df[datetime_column].apply(lambda x: parser.parse(x, fuzzy=True) if pd.notnull(x) else None)
+        # Convert to datetime64[ns]
+        df[datetime_column] = pd.to_datetime(df[datetime_column])
 
-            # Strip the last +05:30 part and format in 24-hour format
-            df[datetime_column] = df[datetime_column].dt.strftime('%B %d, %Y %H:%M')
-
-            # Convert to datetime64[ns]
-            df[datetime_column] = pd.to_datetime(df[datetime_column])
-
-            return df
-
-        search_results_html = driver.page_source
-        soup = BeautifulSoup(search_results_html, 'html.parser')
-
-        news_elements = soup.find_all('li', class_='clearfix')
-
-        if len(news_elements) > 0 :  
-            headlines = []
-            summaries = []
-            date_times = []
-            article_urls = []
-
-            for news_element in news_elements:
-                headline = news_element.find('h2').text
-                summary = news_element.find('p').text
-                datetime_element = news_element.find('span')
-                date_time = datetime_element.text.strip()
-                article_url = news_element.find('a')['href']
-
-                headlines.append(headline)
-                summaries.append(summary)
-                date_times.append(date_time)
-                article_urls.append(article_url)
-
-                # Create a DataFrame
-                news_df = pd.DataFrame({
-                'Source' : 'Money Control',
-                'Headline': headlines,
-                'Summary': summaries,
-                'Datetime': date_times,
-                'URL': article_urls
-                })
-
-                news_df = convert_to_datetime(news_df, 'Datetime')
-            # news_df['ArticleContent'] = news_df.URL.apply(fetch_paragraph_content)
-            driver.quit()
-            return news_df
-        else:
-            driver.quit()
-            return None
-        
-def fetch_news_zerodha(url, search_query = ""):
-
-    edge_driver_path = './msedgedriver.exe'
+        return df
     
-    # Set up Edge options for headless mode
-    edge_options = EdgeOptions()
-    edge_options.use_chromium = True  # Use Chromium-based Edge
-    edge_options.add_argument('--headless')
 
-    # Create a WebDriver instance with the specified options
-    driver = Edge(options=edge_options, executable_path=edge_driver_path)
+    if len(news_elements) > 0 :  
+        headlines = []
+        summaries = []
+        date_times = []
+        article_urls = []
 
-    driver.get(url)
+        for news_element in news_elements:
+            headline = news_element.find('h2').text
+            summary = news_element.find('p').text
+            datetime_element = news_element.find('span')
+            date_time = datetime_element.text.strip()
+            article_url = news_element.find('a')['href']
+
+            headlines.append(headline)
+            summaries.append(summary)
+            date_times.append(date_time)
+            article_urls.append(article_url)
+
+            # Create a DataFrame
+            news_df = pd.DataFrame({
+            'Source' : 'Money Control',
+            'Headline': headlines,
+            'Summary': summaries,
+            'Datetime': date_times,
+            'URL': article_urls
+            })
+
+            news_df = convert_to_datetime(news_df, 'Datetime')
+            filtered_df = news_df[news_df['Summary'].str.contains(search_query, case=False) | news_df['Headline'].str.contains(search_query, case=False)]
+        # news_df['ArticleContent'] = news_df.URL.apply(fetch_paragraph_content)
+
+        return filtered_df
+    else:
+        return None
+        
+def fetch_news_zerodha(url = "https://pulse.zerodha.com/", search_query = ""):
+
+    response = requests.get(url)
+    soup = BeautifulSoup(response.text, 'html.parser')
+    news_elements = soup.find_all('li', class_='clearfix')
 
     def convert_to_datetime(value):
         if 'minute' in value:
@@ -256,16 +235,6 @@ def fetch_news_zerodha(url, search_query = ""):
             return datetime.now() - timedelta(days=float(value.split()[0]))
         else:
             return None
-
-
-    search_bar = WebDriverWait(driver, 10).until(
-        EC.presence_of_element_located((By.XPATH, '//input[@id="q"]'))
-    )  
-    
-    search_bar.send_keys(search_query)
-    time.sleep(5) 
-    search_results_html = driver.page_source
-    soup = BeautifulSoup(search_results_html, 'html.parser')
 
     news_elements = soup.find_all('li', class_='box item')
     if len(news_elements) > 0 :  
@@ -296,10 +265,10 @@ def fetch_news_zerodha(url, search_query = ""):
           })
             
         news_df['Datetime'] = news_df['Datetime'].apply(convert_to_datetime)
-        driver.quit()
-        return news_df
+        filtered_df = news_df[news_df['Summary'].str.contains(search_query, case=False) | news_df['Headline'].str.contains(search_query, case=False)]
+
+        return filtered_df
     else:
-        driver.quit()
         return None
 
 
@@ -538,5 +507,6 @@ def stock_sentiment_analysis():
     # Default rendering for GET requests or other cases
     return render_template('stock_sentiment_analysis.html', options=interval_dropdown, default_value = default_value, plot_html=None,
                            search_query=search_query, tail_html=None, last_fetch_time = last_fetch_time)
+
 
 
