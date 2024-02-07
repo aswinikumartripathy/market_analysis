@@ -466,6 +466,7 @@ def stock_sentiment_analysis():
     global search_query
     global last_fetch_time
 
+
     interval_dropdown = [1, 3, 5, 15, 30, 60]
     default_value = ""
     url1 = "https://www.moneycontrol.com/news/business/markets/"
@@ -477,6 +478,7 @@ def stock_sentiment_analysis():
         action = request.form.get('action')
 
         if action == 'fetch_sentiment':
+            print("inside stock sentiment analysis route - fetch sentiment")
             # Fetch news data using the search_query
             search_query = request.form.get('search_query')
             interval_minutes = (request.form.get('interval_dropdown'))
